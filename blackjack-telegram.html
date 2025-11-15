@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AceBlackJack ♠️♥️♦️♣️</title>
+    
+    <!-- Telegram WebApp Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        /* Reset et adaptation mobile */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            position: fixed;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Container principal */
+        .game-container {
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Header avec chips et nom */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            color: white;
+            font-weight: bold;
+            backdrop-filter: blur(10px);
+        }
+
+        .chips-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+        }
+
+        .chip-icon {
+            width: 25px;
+            height: 25px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #000;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        .player-name {
+            font-size: 16px;
+            color: #FFD700;
+        }
+
+        /* Table de jeu */
+        .game-table {
+            background: linear-gradient(135deg, #0a5f0a, #0d7f0d);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            border: 3px solid rgba(255,215,0,0.3);
+        }
+
+        /* Titres des zones */
+        .section-title {
+            text-align: center;
+            color: #FFD700;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Zone des cartes */
+        .cards-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+            overflow: visible;
+            justify-content: center;
+        }
+
+        .dealer-section, .player-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .dealer-cards, .player-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            min-height: 80px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        /* Score display */
+        .score {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Cartes */
+        .card {
+            width: 50px;
+            height: 70px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+            background: white;
+            position: relative;
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card.red {
+            color: #e74c3c;
+        }
+
+        .card.black {
+            color: #2c3e50;
+        }
+
+        .card.back {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 24px;
+        }
+
+        /* Bet display */
+        .bet-display {
+            text-align: center;
+            color: #FFD700;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Chips selector */
+        .chips-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .chip {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            border: 3px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .chip:active {
+            transform: scale(0.95);
+        }
+
+        .chip.selected {
+            border-color: #FFD700;
+            box-shadow: 0 0 20px rgba(255,215,0,0.6);
+            transform: scale(1.1);
+        }
+
+        .chip.chip-1 { background: linear-gradient(135deg, #ffffff, #e0e0e0); color: #000; }
+        .chip.chip-5 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+        .chip.chip-25 { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
+        .chip.chip-100 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; }
+        .chip.chip-500 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; }
+
+        /* Boutons */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 15px;
+            padding-bottom: 10px;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 100px;
+            flex: 1 1 auto;
+            max-width: 150px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn.btn-deal {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn.btn-hit {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn.btn-stand {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn.btn-clear {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .btn.btn-buy {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Message display */
+        .message {
+            text-align: center;
+            color: #FFD700;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 12px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 10px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+            border: 2px solid rgba(255,215,0,0.3);
+        }
+
+        /* Media queries pour très petits écrans */
+        @media (max-height: 600px) {
+            .game-container {
+                padding: 5px;
+            }
+            
+            .game-table {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 8px 12px;
+                margin-bottom: 5px;
+            }
+            
+            .card {
+                width: 40px;
+                height: 60px;
+                font-size: 16px;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 14px;
+                min-width: 80px;
+            }
+            
+            .chip {
+                width: 45px;
+                height: 45px;
+                font-size: 12px;
+            }
+
+            .cards-area {
+                gap: 10px;
+            }
+
+            .section-title {
+                font-size: 12px;
+                margin-bottom: 5px;
+            }
+
+            .score {
+                font-size: 16px;
+            }
+
+            .message {
+                font-size: 16px;
+                padding: 8px;
+                min-height: 40px;
+            }
+        }
+
+        /* Animation pour les cartes qui apparaissent */
+        @keyframes cardSlide {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: cardSlide 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="chips-display">
+                <div class="chip-icon">💰</div>
+                <span id="chips-count">25</span> chips
+            </div>
+            <div class="player-name">Max</div>
+        </div>
+
+        <!-- Game Table -->
+        <div class="game-table">
+            <!-- Message -->
+            <div class="message" id="message">Place Your Bet</div>
+
+            <!-- Bet Display -->
+            <div class="bet-display">Bet: <span id="current-bet">0</span> chips</div>
+
+            <!-- Chips Selector -->
+            <div class="chips-selector" id="chips-selector">
+                <div class="chip chip-1" data-value="1">1</div>
+                <div class="chip chip-5" data-value="5">5</div>
+                <div class="chip chip-25" data-value="25">25</div>
+                <div class="chip chip-100" data-value="100">100</div>
+                <div class="chip chip-500" data-value="500">500</div>
+            </div>
+
+            <!-- Cards Area -->
+            <div class="cards-area">
+                <!-- Dealer Section -->
+                <div class="dealer-section">
+                    <div class="section-title">Dealer <span class="score" id="dealer-score"></span></div>
+                    <div class="dealer-cards" id="dealer-cards"></div>
+                </div>
+
+                <!-- Player Section -->
+                <div class="player-section">
+                    <div class="section-title">You <span class="score" id="player-score"></span></div>
+                    <div class="player-cards" id="player-cards"></div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="btn btn-clear" id="clear-btn">Clear</button>
+                <button class="btn btn-deal" id="deal-btn">Deal</button>
+                <button class="btn btn-buy" id="buy-chips-btn">Buy Chips</button>
+            </div>
+
+            <div class="controls" id="game-controls" style="display: none;">
+                <button class="btn btn-hit" id="hit-btn">Hit</button>
+                <button class="btn btn-stand" id="stand-btn">Stand</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialiser Telegram WebApp
+        let tg = null;
+        if (window.Telegram && window.Telegram.WebApp) {
+            tg = window.Telegram.WebApp;
+            tg.expand();
+            tg.ready();
+            tg.disableVerticalSwipes();
+            
+            // Récupérer le nom de l'utilisateur depuis Telegram
+            const user = tg.initDataUnsafe?.user;
+            if (user) {
+                document.querySelector('.player-name').textContent = user.first_name || 'Player';
+            }
+        }
+
+        // Empêcher le scroll sur body
+        document.body.addEventListener('touchmove', function(e) {
+            if (e.target === document.body) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Game State
+        let deck = [];
+        let playerHand = [];
+        let dealerHand = [];
+        let playerChips = 25;
+        let currentBet = 0;
+        let gameInProgress = false;
+
+        // DOM Elements
+        const chipsCountEl = document.getElementById('chips-count');
+        const currentBetEl = document.getElementById('current-bet');
+        const messageEl = document.getElementById('message');
+        const dealerCardsEl = document.getElementById('dealer-cards');
+        const playerCardsEl = document.getElementById('player-cards');
+        const dealerScoreEl = document.getElementById('dealer-score');
+        const playerScoreEl = document.getElementById('player-score');
+        const chipsSelectorEl = document.getElementById('chips-selector');
+        const dealBtn = document.getElementById('deal-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const hitBtn = document.getElementById('hit-btn');
+        const standBtn = document.getElementById('stand-btn');
+        const gameControlsEl = document.getElementById('game-controls');
+        const buyChipsBtn = document.getElementById('buy-chips-btn');
+
+        // Card suits and values
+        const suits = ['♠️', '♥️', '♦️', '♣️'];
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // Initialize deck
+        function createDeck() {
+            deck = [];
+            for (let suit of suits) {
+                for (let value of values) {
+                    deck.push({ suit, value });
+                }
+            }
+            shuffleDeck();
+        }
+
+        function shuffleDeck() {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        function drawCard() {
+            return deck.pop();
+        }
+
+        function getCardValue(card) {
+            if (card.value === 'A') return 11;
+            if (['J', 'Q', 'K'].includes(card.value)) return 10;
+            return parseInt(card.value);
+        }
+
+        function calculateHandValue(hand) {
+            let value = 0;
+            let aces = 0;
+
+            for (let card of hand) {
+                const cardValue = getCardValue(card);
+                value += cardValue;
+                if (card.value === 'A') aces++;
+            }
+
+            while (value > 21 && aces > 0) {
+                value -= 10;
+                aces--;
+            }
+
+            return value;
+        }
+
+        function isRed(suit) {
+            return suit === '♥️' || suit === '♦️';
+        }
+
+        function renderCard(card, hidden = false) {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            
+            if (hidden) {
+                cardEl.className += ' back';
+                cardEl.textContent = '🂠';
+            } else {
+                cardEl.className += isRed(card.suit) ? ' red' : ' black';
+                cardEl.textContent = card.value + card.suit;
+            }
+            
+            return cardEl;
+        }
+
+        function renderHands(hideDealerCard = false) {
+            dealerCardsEl.innerHTML = '';
+            playerCardsEl.innerHTML = '';
+
+            dealerHand.forEach((card, index) => {
+                const hidden = hideDealerCard && index === 1;
+                dealerCardsEl.appendChild(renderCard(card, hidden));
+            });
+
+            playerHand.forEach(card => {
+                playerCardsEl.appendChild(renderCard(card));
+            });
+
+            updateScores(hideDealerCard);
+        }
+
+        function updateScores(hideDealerCard = false) {
+            const playerValue = calculateHandValue(playerHand);
+            playerScoreEl.textContent = `(${playerValue})`;
+
+            if (hideDealerCard) {
+                const firstCard = getCardValue(dealerHand[0]);
+                dealerScoreEl.textContent = `(${firstCard})`;
+            } else {
+                const dealerValue = calculateHandValue(dealerHand);
+                dealerScoreEl.textContent = `(${dealerValue})`;
+            }
+        }
+
+        function updateChipsDisplay() {
+            chipsCountEl.textContent = playerChips;
+            currentBetEl.textContent = currentBet;
+        }
+
+        function showMessage(msg) {
+            messageEl.textContent = msg;
+        }
+
+        // Chip selection
+        chipsSelectorEl.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('chip') || gameInProgress) return;
+            
+            const chipValue = parseInt(e.target.dataset.value);
+            
+            if (currentBet + chipValue <= playerChips) {
+                currentBet += chipValue;
+                updateChipsDisplay();
+                
+                // Visual feedback
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+                e.target.classList.add('selected');
+                setTimeout(() => e.target.classList.remove('selected'), 200);
+            } else {
+                showMessage('Not enough chips!');
+            }
+        });
+
+        // Clear bet
+        clearBtn.addEventListener('click', () => {
+            if (!gameInProgress) {
+                currentBet = 0;
+                updateChipsDisplay();
+                showMessage('Bet cleared!');
+            }
+        });
+
+        // Deal
+        dealBtn.addEventListener('click', () => {
+            if (currentBet === 0) {
+                showMessage('Place a bet first!');
+                return;
+            }
+
+            if (currentBet > playerChips) {
+                showMessage('Not enough chips!');
+                return;
+            }
+
+            startGame();
+        });
+
+        function startGame() {
+            gameInProgress = true;
+            playerChips -= currentBet;
+            updateChipsDisplay();
+
+            createDeck();
+            playerHand = [drawCard(), drawCard()];
+            dealerHand = [drawCard(), drawCard()];
+
+            renderHands(true);
+            showMessage('Your turn!');
+
+            chipsSelectorEl.style.display = 'none';
+            dealBtn.style.display = 'none';
+            clearBtn.style.display = 'none';
+            buyChipsBtn.style.display = 'none';
+            gameControlsEl.style.display = 'flex';
+
+            // Check for blackjack
+            if (calculateHandValue(playerHand) === 21) {
+                stand();
+            }
+        }
+
+        // Hit
+        hitBtn.addEventListener('click', () => {
+            playerHand.push(drawCard());
+            renderHands(true);
+
+            const playerValue = calculateHandValue(playerHand);
+            if (playerValue > 21) {
+                endGame('Bust! You lose 😢');
+            } else if (playerValue === 21) {
+                stand();
+            }
+        });
+
+        // Stand
+        standBtn.addEventListener('click', stand);
+
+        function stand() {
+            renderHands(false);
+
+            // Dealer draws
+            while (calculateHandValue(dealerHand) < 17) {
+                dealerHand.push(drawCard());
+                renderHands(false);
+            }
+
+            const playerValue = calculateHandValue(playerHand);
+            const dealerValue = calculateHandValue(dealerHand);
+
+            let result;
+            if (dealerValue > 21) {
+                result = 'Dealer busts! You win! 🎉';
+                playerChips += currentBet * 2;
+            } else if (playerValue > dealerValue) {
+                result = 'You win! 🎉';
+                playerChips += currentBet * 2;
+            } else if (playerValue === dealerValue) {
+                result = 'Push! 🤝';
+                playerChips += currentBet;
+            } else {
+                result = 'Dealer wins! 😢';
+            }
+
+            endGame(result);
+        }
+
+        function endGame(message) {
+            gameInProgress = false;
+            showMessage(message);
+            updateChipsDisplay();
+
+            gameControlsEl.style.display = 'none';
+            chipsSelectorEl.style.display = 'flex';
+            dealBtn.style.display = 'block';
+            clearBtn.style.display = 'block';
+            buyChipsBtn.style.display = 'block';
+
+            currentBet = 0;
+            updateChipsDisplay();
+
+            if (playerChips === 0) {
+                showMessage('Out of chips! Buy more to continue.');
+            }
+        }
+
+        // Buy chips button
+        buyChipsBtn.addEventListener('click', () => {
+            showMessage('Contact support to buy more chips!');
+            // You can add Telegram payment integration here
+            if (tg) {
+                tg.showAlert('Use /buy command in the chat to purchase more chips!');
+            }
+        });
+
+        // Initialize
+        updateChipsDisplay();
+        showMessage('Place Your Bet');
+    </script>
+</body>
+</html>
